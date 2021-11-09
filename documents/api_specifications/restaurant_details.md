@@ -1,23 +1,22 @@
-# Get Restaurant Details Function `restaurants/{restaurant_id}`
+# Get Restaurant Details
 Get detail information about a restaurant
 
 ## Table referenced by this API
 + `restaurants`
 + `restaurants` reference table: `menus` 
 + `menus` reference table: `items`, `users` 
-
-＋　others: `users`, `countries`, `feedbacks`, `items`
+＋　others: `item_feedbacks`
 
 ## Details
 Return restaurant information in system with id : `restaurant_id`
 ### Input. request
 #### Params
-| Params        | Description                          | Type  | Required  | Example  |
-| ------------- |:------------------------------------:| -----:| ---------:| --------:|
-| restaurant_id | Numeric ID of the restaurant to get. | int   | True      |  0       |
+| Params        | Description                          | Type  | Required  | Validation  | Example  |
+| ------------- |:------------------------------------:| -----:| ---------:| -----------:| --------:|
+| restaurant_id | Numeric ID of the restaurant to get. | int   | True      |             |   0      |
 
-#### Request conditions
-+ Is logined: false
+#### Search Logic
++ Need to login: false
 + `restaurant_id` (required)
     + **filter**: match `restaurants`.id
 
@@ -29,38 +28,8 @@ Return restaurant information in system with id : `restaurant_id`
 + Only return result with 1 restaurant - 1 `restaurant_id` exist on DB
     
 ### Output. response
-+ Output data <table name.column name>
-    + `restaurantContents`
-        + <restaurants.id>
-        + <restaurants.name>
-        + <restaurants.website>
-        + <restaurants.phone>
-        + <restaurants.description>
-        + `restaurantAddressContent`
-            + <restaurants.postal_code>
-            + <restaurants.prefecture>
-            + <restaurants.city>
-            + <restaurants.town> 
-            + <restaurants.block>
-        + `restaurantGeoContent`
-            + <restaurants.lon>
-            + <restaurants.lat>
-        + `nationsRateContent`(multiple) : `menus` `items` `item_feedbacks` `users` reference
-            + <users.country_name>
-            + <rate> `calculate by get average from user's rate for every item in restaurant`
-        + `menuContent` (multiple) : `menus` reference
-            + <menus.name>
-            + `menuItemsContent` (multiple) : `items` reference
-                + <items.name>
-                + <items.description>
-                + <items.price> (`¥`)
-                + `itemFeedbackContent` (multiple) : `item_feedbacks` `users` reference
-                    + <nation> (get from `user.country_name`)
-                    + <rate> (get average from user's rates by nation)
-                    + `userCommentsContent` (multiple) 
-                        + <item_feedbacks.user_id>
-                        + <users.name>
-                        + <item_feedbacks.comment>
-                        + <item_feedbacks.rate>
++ [Restaurant details response](https://github.com/hanhnt-mf/otabe/blob/master/documents/api_specifications/restaurant_details_response.md)
     
-    
+### Error Cases (INVALID_ARGUMENT)
++ Restaurant cannot be found if `restaurant_id` param doesn't exist in DB . Return {} (empty object)
++ Error showed if `restaurant_id`'s not type `int`
