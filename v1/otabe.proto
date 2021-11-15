@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package="/v1";
+
+service OTabeManager {
+  rpc GetRestaurantDetails (GetRestaurantRequest) returns (GetRestaurantResponse) {}
+  rpc ListRestaurants (ListRestaurantsRequest) returns (ListRestaurantsResponse) {}
+}
+
+message GetRestaurantRequest {
+   int32 restaurant_id = 1;
+}
+
+message Geo {
+  double long = 8;
+  double lat = 9;
+}
+
+message Restaurant {
+  int32 id = 1;
+  string name = 2;
+  string website = 3;
+  string phone = 4;
+  string description = 5;
+  string postal_code = 6;
+  string address = 7;
+  Geo geo = 8;
+  optional google.protobuf.Timestamp created_at = 9;
+  optional google.protobuf.Timestamp updated_at = 10;
+}
+
+message NationsRate {
+  string nation_name = 1;
+  int32 rate = 2;
+}
+
+message Comments {
+  int32 user_id = 1;
+  string user_name = 2;
+  string user_comment = 3;
+  int32 rate = 4;
+}
+
+message Feedbacks {
+  string nation = 1;
+  int32 rate = 2;
+  repeated Comments comments = 3;
+}
+
+message MenuItems {
+  string item_name = 1;
+  string description = 2;
+  int32 price = 3;
+  repeated Feedbacks feedbacks = 4;
+}
+
+message Menus {
+  string name = 1;
+  repeated MenuItems menu_items = 2;
+}
+
+message Users {
+  int32 id = 1;
+  string first_name = 2;
+  string last_name = 3;
+  string nation = 4;
+}
+
+message GetRestaurantResponse {
+  Restaurant restaurant = 1;
+  repeated NationsRate nations_rate = 2;
+  repeated Menus menus = 3;
+  repeated Users users = 4;
+}
+
+message ListRestaurantsRequest {
+
+}
+
+message ListRestaurantsResponse {
+
+}
