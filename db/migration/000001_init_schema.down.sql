@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS `item_feedback`;
+DROP TABLE IF EXISTS `item`;
+DROP TABLE IF EXISTS `menu`;
+DROP TABLE IF EXISTS `user`;
+DROP TABLE IF EXISTS `restaurant`;
