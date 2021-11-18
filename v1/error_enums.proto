@@ -1,0 +1,63 @@
+syntax = "proto3";
+package v1;
+
+option go_package="/v1";
+
+enum InvalidFieldType {
+  INVALID_FIELD_TYPE_UNKNOWN = 0;
+  INVALID_FIELD_TYPE_RESTAURANT_NAME = 1;
+  INVALID_FIELD_TYPE_ITEM_NAME = 2;
+
+  INVALID_FIELD_TYPE_CONDITIONS = 3;
+
+  INVALID_FIELD_TYPE_RESTAURANT_RECOGNIZED_AT_CONDITIONS = 4;
+}
+
+// エラー種別を表現
+enum InvalidReasonType {
+  INVALID_REASON_TYPE_UNKNOWN = 0;
+
+  // 必須項目が指定されていないエラー
+  //  "is required"
+  INVALID_REASON_TYPE_IS_REQUIRED = 1;
+
+  // 特定の閾値以下の値が指定されているエラー
+  //  "must be greater than {{min_value}}"
+  INVALID_REASON_TYPE_MUST_BE_GREATER_THAN = 2;
+
+  // 指定の閾値より小さい値が指定されているエラー
+  //  "must be greater than or equal to {{min_value}}"
+  INVALID_REASON_TYPE_MUST_BE_GREATER_THAN_OR_EQUAL_TO = 3;
+
+  // 特定の値でない値が指定されているエラー
+  //  "must be equal to {{value}}"
+  INVALID_REASON_TYPE_MUST_BE_EQUAL_TO = 4;
+
+  // 特定の閾値以上の値が指定されているエラー
+  //  "must be less than {{max_value}}"
+  INVALID_REASON_TYPE_MUST_BE_LESS_THAN = 5;
+
+  // 特定の閾値より大きい値が指定されているエラー
+  //  "must be less than or equal to {{max_value}}"
+  INVALID_REASON_TYPE_MUST_BE_LESS_THAN_OR_EQUAL_TO = 6;
+
+  // 特定の日付以前の日付が指定されているエラー
+  //  "must be after to {{min_date}}"
+  INVALID_REASON_TYPE_DATE_MUST_BE_AFTER = 7;
+
+  // 特定の日付より前の日付が指定されているエラー
+  //  "must be after or equal to {{min_date}}"
+  INVALID_REASON_TYPE_DATE_MUST_BE_AFTER_OR_EQUAL_TO = 8;
+
+  // 同時に指定できない複数の項目が同時にしていされているエラー
+  //  "must not be set together"
+  INVALID_REASON_TYPE_MUST_NOT_BE_SET_TOGETHER = 9;
+
+  // 重複して指定してはいけない値が重複して指定されているエラー
+  //  "must not be duplicated"
+  INVALID_REASON_TYPE_MUST_NOT_BE_DUPLICATED = 10;
+
+  // 特定のTimeStampより前のTimeStampが指定されているエラー
+  //  "must be after or equal to {{min_timestamp}}"
+  INVALID_REASON_TYPE_TIMESTAMP_MUST_BE_AFTER_OR_EQUAL_TO = 11;
+}
