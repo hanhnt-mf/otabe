@@ -8,7 +8,7 @@ option go_package="/v1";
 
 service OTabeManager {
   rpc GetRestaurantDetails (GetRestaurantRequest) returns (GetRestaurantResponse) {}
-  rpc ListRestaurants (ListRestaurantsRequest) returns (ListRestaurantsResponse) {}
+  rpc ListRestaurantsByOptions (ListRestaurantsRequest) returns (ListRestaurantsResponse) {}
 }
 
 message GetRestaurantRequest {
@@ -77,10 +77,36 @@ message GetRestaurantResponse {
   repeated Users users = 4;
 }
 
-message ListRestaurantsRequest {
+message SearchLocationConditions {
+  optional double long = 1;
+  optional double lat = 2;
+  optional double distance = 3;
+}
 
+message Paging {
+  uint64 page_limit = 1;
+  uint64 page_number = 2;
+  bool total_pages = 3;
+  bool total_results = 4;
+}
+
+message PagingResult {
+  optional uint64 total_pages = 3;
+  optional uint64 total_results = 4;
+}
+
+message ListRestaurantsRequest {
+  optional string restaurant_name = 1;
+  optional string nation = 2;
+  optional string item_name = 3;
+  optional string prefecture = 4;
+  optional bool is_menu = 5;
+  optional SearchLocationConditions location = 6;
+  optional Paging paging = 7;
+  optional string sorted_by = 8;
 }
 
 message ListRestaurantsResponse {
-
+  repeated GetRestaurantResponse data = 1;
+  optional PagingResult paging_result = 2;
 }

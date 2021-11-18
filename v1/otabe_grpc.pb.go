@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OTabeManagerClient interface {
 	GetRestaurantDetails(ctx context.Context, in *GetRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error)
-	ListRestaurants(ctx context.Context, in *ListRestaurantsRequest, opts ...grpc.CallOption) (*ListRestaurantsResponse, error)
+	ListRestaurantsByOptions(ctx context.Context, in *ListRestaurantsRequest, opts ...grpc.CallOption) (*ListRestaurantsResponse, error)
 }
 
 type oTabeManagerClient struct {
@@ -39,9 +39,9 @@ func (c *oTabeManagerClient) GetRestaurantDetails(ctx context.Context, in *GetRe
 	return out, nil
 }
 
-func (c *oTabeManagerClient) ListRestaurants(ctx context.Context, in *ListRestaurantsRequest, opts ...grpc.CallOption) (*ListRestaurantsResponse, error) {
+func (c *oTabeManagerClient) ListRestaurantsByOptions(ctx context.Context, in *ListRestaurantsRequest, opts ...grpc.CallOption) (*ListRestaurantsResponse, error) {
 	out := new(ListRestaurantsResponse)
-	err := c.cc.Invoke(ctx, "/v1.OTabeManager/ListRestaurants", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/v1.OTabeManager/ListRestaurantsByOptions", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (c *oTabeManagerClient) ListRestaurants(ctx context.Context, in *ListRestau
 // for forward compatibility
 type OTabeManagerServer interface {
 	GetRestaurantDetails(context.Context, *GetRestaurantRequest) (*GetRestaurantResponse, error)
-	ListRestaurants(context.Context, *ListRestaurantsRequest) (*ListRestaurantsResponse, error)
+	ListRestaurantsByOptions(context.Context, *ListRestaurantsRequest) (*ListRestaurantsResponse, error)
 	mustEmbedUnimplementedOTabeManagerServer()
 }
 
@@ -64,8 +64,8 @@ type UnimplementedOTabeManagerServer struct {
 func (UnimplementedOTabeManagerServer) GetRestaurantDetails(context.Context, *GetRestaurantRequest) (*GetRestaurantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRestaurantDetails not implemented")
 }
-func (UnimplementedOTabeManagerServer) ListRestaurants(context.Context, *ListRestaurantsRequest) (*ListRestaurantsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListRestaurants not implemented")
+func (UnimplementedOTabeManagerServer) ListRestaurantsByOptions(context.Context, *ListRestaurantsRequest) (*ListRestaurantsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRestaurantsByOptions not implemented")
 }
 func (UnimplementedOTabeManagerServer) mustEmbedUnimplementedOTabeManagerServer() {}
 
@@ -98,20 +98,20 @@ func _OTabeManager_GetRestaurantDetails_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OTabeManager_ListRestaurants_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OTabeManager_ListRestaurantsByOptions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListRestaurantsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OTabeManagerServer).ListRestaurants(ctx, in)
+		return srv.(OTabeManagerServer).ListRestaurantsByOptions(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v1.OTabeManager/ListRestaurants",
+		FullMethod: "/v1.OTabeManager/ListRestaurantsByOptions",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OTabeManagerServer).ListRestaurants(ctx, req.(*ListRestaurantsRequest))
+		return srv.(OTabeManagerServer).ListRestaurantsByOptions(ctx, req.(*ListRestaurantsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -128,8 +128,8 @@ var OTabeManager_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OTabeManager_GetRestaurantDetails_Handler,
 		},
 		{
-			MethodName: "ListRestaurants",
-			Handler:    _OTabeManager_ListRestaurants_Handler,
+			MethodName: "ListRestaurantsByOptions",
+			Handler:    _OTabeManager_ListRestaurantsByOptions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
