@@ -3,7 +3,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"google.golang.org/grpc"
 	"log"
 	pb "otabe/v1"
@@ -17,6 +19,24 @@ var (
 	serverHostOverride = flag.String("server_host_override", "x.test.example.com", "The server name used to verify the hostname returned by the TLS handshake")
 )
 
+func getRestaurantDetails(client pb.OTabeManagerClient, ctx context.Context, request *pb.GetRestaurantRequest) {
+	res, err := client.GetRestaurantDetails(ctx, request)
+	if err != nil {
+		log.Fatalf("%v.GetRestaurantDetails(_) = _, %v: ", client, err)
+	}
+	resJson, _ := json.Marshal(res)
+	fmt.Printf(`%s`,resJson)
+}
+
+func listRestaurantsByOptions(client pb.OTabeManagerClient, ctx context.Context, req *pb.ListRestaurantsRequest) {
+	res, err := client.ListRestaurantsByOptions(ctx, req)
+	if err != nil {
+		log.Fatalf("%v.ListReqtaurantsByOptions(_) = _, %v: ", client, err)
+	}
+	resJson, _ := json.Marshal(res)
+	fmt.Printf(`%s`,resJson)
+}
+
 func main() {
 	conn, err := grpc.Dial(*serverAddr, grpc.WithInsecure(), grpc.WithBlock())
 	// WithBlock: ensure Dial() will not return value until the connection is made
@@ -29,9 +49,25 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := client.GetRestaurantDetails(ctx, &pb.GetRestaurantRequest{RestaurantId: 1})
-	if err != nil {
-	 log.Fatalf("%v.GetRestaurantDetails(_) = _, %v: ", client, err)
-	}
-	log.Printf(`Restaurant Details: %v`, res)
+	//getRestaurantDetails(client, ctx, &pb.GetRestaurantRequest{RestaurantId: 1})
+	//restaurantName := "HaNoi & Hanoi"
+	//nation := "Vietnamese"
+	//itemName := "Banh mi nhan thit"
+	//prefecture := "1-3-28 Shaiba Tokyo"
+	//lat := 35.64489421538165
+	//long := 139.74929356703967
+	//distance := float64(100000)
+	//location:= &pb.SearchLocationConditions{Long: &long, Lat: &lat, Distance: &distance}
+	//paging := &pb.Paging{PageLimit: 10, PageNumber: 2}
+	//sortedBy := "created_at"
+
+	listRestaurantsByOptions(client, ctx, &pb.ListRestaurantsRequest{
+		//RestaurantName: &restaurantName,
+		//Nation: &nation,
+		//ItemName: &itemName,
+		//Prefecture: &prefecture,
+		//Location: location,
+		//Paging: paging,
+		//SortedBy: &sortedBy,
+	})
 }

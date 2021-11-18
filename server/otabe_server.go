@@ -4,12 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"flag"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 	pbl_otabe "otabe"
+	"otabe/controller"
 	pb "otabe/v1"
+	"time"
 )
 
 var (
@@ -92,7 +95,6 @@ func getMenuItems (menuId int32) ([]*pb.MenuItems, []*pb.NationsRate) {
 				Feedbacks: feedBacks})
 	}
 
-	log.Printf("item nations rates %v", itemsNationRates)
 	return menuItems, itemsNationRates
 }
 
@@ -131,8 +133,8 @@ func getMenus(resId int32)  []*pb.Menus {
 	return menus
 }
 
+// GetRestaurantDetails : api get restaurant details
 func (s *oTabeServer) GetRestaurantDetails(ctx context.Context, req *pb.GetRestaurantRequest) (*pb.GetRestaurantResponse, error) {
-	log.Printf("Received: %v", req.GetRestaurantId())
 	var restaurantId = req.GetRestaurantId()
 	resQuery, er := db.Query("SELECT * FROM restaurant WHERE id = ?", restaurantId)
 	if er != nil {
@@ -151,9 +153,101 @@ func (s *oTabeServer) GetRestaurantDetails(ctx context.Context, req *pb.GetResta
 	return &pb.GetRestaurantResponse{Restaurant: res, NationsRate: nationsRate, Menus: getMenus(restaurantId)}, nil
 }
 
+func searchRestaurants(req *pb.ListRestaurantsRequest) ([]int, error) {
+	searchResSQL := `SELECT r.id, r.long, r.lat FROM restaurant as r 
+    	INNER JOIN menu as m ON (r.id = m.restaurant_id AND (? IS NULL OR r.name = ?) AND (? IS NULL OR r.address = ?)) 
+    	INNER JOIN item as i  ON (m.id = i.menu_id AND (? is NULL  OR i.name = ?) ) 
+		`
+
+	if req.Nation != nil {
+		searchResSQL = fmt.Sprintf("%s INNER JOIN item_feedback as if2 ON (i.id = if2.item_id) ", searchResSQL)
+		searchResSQL = fmt.Sprintf(`%s INNER JOIN user as u ON (if2.user_id = u.id AND ("%s" is NULL OR u.nation = "%s"))`, searchResSQL, *req.Nation, *req.Nation)
+	}
+	searchResSQL = fmt.Sprintf("%s  GROUP BY r.id ORDER BY r.%s DESC", searchResSQL, *req.SortedBy)
+	searchResSQL = fmt.Sprintf("%s LIMIT %d OFFSET %d", searchResSQL, req.Paging.PageLimit, req.Paging.PageNumber - 1)
+
+	searchResPrepare, errR := db.Prepare(searchResSQL)
+	if errR != nil {
+		log.Fatalf("Error preparing search restaurant sql %v", errR)
+		panic(errR)
+	}
+
+	searchResQuery, errR := searchResPrepare.Query(
+		req.RestaurantName, req.RestaurantName,
+		req.Prefecture, req.Prefecture,
+		req.ItemName, req.ItemName)
+
+	if errR != nil {
+		log.Fatalf("Error query search restaurant values %v", errR)
+		panic(errR)
+	}
+	long := new(float64)
+	lat := new(float64)
+	restaurantIds := make([]int, 0)
+	for searchResQuery.Next() {
+		restaurantId := new(int)
+		errR = searchResQuery.Scan(&restaurantId, &long, &lat)
+		if errR != nil {
+			log.Fatalf("Cannot scan restaurants list %v", err)
+			panic(errR)
+		}
+		if req.Location != nil {
+			pointsDistance := pbl_otabe.Distance(*lat, *long, *req.Location.Lat, *req.Location.Long)
+			if pointsDistance <= 100000 {
+				restaurantIds = append(restaurantIds, *restaurantId)
+			}
+		} else {
+			restaurantIds = append(restaurantIds, *restaurantId)
+		}
+	}
+
+	return restaurantIds, errR
+}
+
+func convertRestaurantConditions(req *pb.ListRestaurantsRequest) *pb.ListRestaurantsRequest {
+	if req.GetPaging() == nil {
+		req.Paging = &pb.Paging{PageLimit: uint64(10), PageNumber: uint64(1)}
+	}
+	if req.SortedBy == nil {
+		defaultSortedBy := "created_at"
+		req.SortedBy = &defaultSortedBy
+	}
+	return req
+}
+
+func (s *oTabeServer) ListRestaurantsByOptions(ctx context.Context, req *pb.ListRestaurantsRequest, ) (*pb.ListRestaurantsResponse, error) {
+	errV := controller.ValidateListRestaurantsRequest(req)
+	if errV != nil {
+		return nil, errV
+	}
+	// convert condition : order by values
+	convertedReqConditions := convertRestaurantConditions(req)
+
+	restaurantIds, err := searchRestaurants(convertedReqConditions)
+	if err != nil {
+		log.Fatalf("Err query searh restaurants by options %v", err)
+		panic(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	restaurantsList := make([]*pb.GetRestaurantResponse, 0)
+	for _, restaurantId := range restaurantIds {
+		restaurantDetails, err := s.GetRestaurantDetails(ctx, &pb.GetRestaurantRequest{RestaurantId: int32(restaurantId)})
+		if err != nil {
+			log.Fatalf("Err get restaurant details %v", err)
+			panic(err)
+		}
+		restaurantsList = append(restaurantsList, restaurantDetails)
+	}
+
+	return &pb.ListRestaurantsResponse{Data: restaurantsList}, nil
+}
+
 
 func connect() {
-	db, err = sql.Open("mysql", "root:Hannamysql.1518@tcp(127.0.0.1:50125)/otabe")
+	db, err = sql.Open("mysql", "root:Hannamysql.1518@tcp(127.0.0.1:50001)/otabe")
 	if err != nil {
 		log.Fatalf("Error validating sql.Open arguments")
 		panic(err)
@@ -176,7 +270,6 @@ func main() {
 
 	// connect to database
 	connect()
-	//getMenus(1)
 
 	if err = grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve %v", err)
