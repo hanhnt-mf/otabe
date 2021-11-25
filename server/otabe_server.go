@@ -19,14 +19,14 @@ var (
 	port = flag.Int("port", 8000, "The server port")
 	db *sql.DB
 	err error
-	nationsRate []*pb.NationsRate
 )
 
-type oTabeServer struct {
+type OTabeServer struct {
 	pb.UnimplementedOTabeManagerServer
 }
 
-func getMenuItems (menuId int32) ([]*pb.MenuItems, []*pb.NationsRate) {
+
+func GetMenuItems (menuId int32) ([]*pb.MenuItems, []*pb.NationsRate) {
 	menuItems := make([]*pb.MenuItems, 0)
 	userIds := make([]int32, 0)
 	itemQuery, er := db.Query("SELECT id, name, description, price FROM item WHERE menu_id = ?", menuId)
@@ -98,7 +98,7 @@ func getMenuItems (menuId int32) ([]*pb.MenuItems, []*pb.NationsRate) {
 	return menuItems, itemsNationRates
 }
 
-func getMenus(resId int32)  []*pb.Menus {
+func GetMenus(resId int32)  ([]*pb.Menus, []*pb.NationsRate) {
 	// query to menus = resId -> item = menuId -> item_feedback = item_id -> user = user_id in item_feedback
 	// -> get user_id: nation, rate -> push []userFeedbacks
 	menuQuery, er := db.Query("SELECT id,name FROM menu WHERE restaurant_id = ?", resId)
@@ -109,6 +109,7 @@ func getMenus(resId int32)  []*pb.Menus {
 
 	menu := &pb.Menus{}
 	menus := make([]*pb.Menus, 0)
+	nationsRate := make([]*pb.NationsRate, 0)
 	for menuQuery.Next() {
 		menuId := new(int32)
 		err = menuQuery.Scan(menuId, &menu.Name)
@@ -116,7 +117,7 @@ func getMenus(resId int32)  []*pb.Menus {
 			log.Fatalf("Cannot scan menu query %v", err)
 			panic(err)
 		}
-		menuItems, menuRates := getMenuItems(*menuId)
+		menuItems, menuRates := GetMenuItems(*menuId)
 		menus = append(menus, &pb.Menus{Name: menu.Name, MenuItems: menuItems})
 		if len(nationsRate) == 0 {
 			nationsRate = menuRates
@@ -130,30 +131,10 @@ func getMenus(resId int32)  []*pb.Menus {
 			}
 		}
 	}
-	return menus
+	return menus, nationsRate
 }
 
-// GetRestaurantDetails : api get restaurant details
-func (s *oTabeServer) GetRestaurantDetails(ctx context.Context, req *pb.GetRestaurantRequest) (*pb.GetRestaurantResponse, error) {
-	var restaurantId = req.GetRestaurantId()
-	resQuery, er := db.Query("SELECT * FROM restaurant WHERE id = ?", restaurantId)
-	if er != nil {
-		log.Fatalf("Cannot get restaurant details %v", err)
-		panic(er)
-	}
-	res := &pb.Restaurant{Geo: &pb.Geo{}}
-	for resQuery.Next() {
-		err = resQuery.Scan(&res.Id, &res.Name, &res.Website, &res.Phone, &res.Description,
-			&res.Address, &res.PostalCode, &res.Geo.Long, &res.Geo.Lat, &res.CreatedAt, &res.UpdatedAt)
-		if err != nil {
-			log.Fatalf("Cannot get restaurant details %v", err)
-			panic(err)
-		}
-	}
-	return &pb.GetRestaurantResponse{Restaurant: res, NationsRate: nationsRate, Menus: getMenus(restaurantId)}, nil
-}
-
-func searchRestaurants(req *pb.ListRestaurantsRequest) ([]int, error) {
+func SearchRestaurants(req *pb.ListRestaurantsRequest) ([]int, error) {
 	searchResSQL := `SELECT r.id, r.long, r.lat FROM restaurant as r 
     	INNER JOIN menu as m ON (r.id = m.restaurant_id AND (? IS NULL OR r.name = ?) AND (? IS NULL OR r.address = ?)) 
     	INNER JOIN item as i  ON (m.id = i.menu_id AND (? is NULL  OR i.name = ?) ) 
@@ -204,7 +185,7 @@ func searchRestaurants(req *pb.ListRestaurantsRequest) ([]int, error) {
 	return restaurantIds, errR
 }
 
-func convertRestaurantConditions(req *pb.ListRestaurantsRequest) *pb.ListRestaurantsRequest {
+func ConvertRestaurantConditions(req *pb.ListRestaurantsRequest) *pb.ListRestaurantsRequest {
 	if req.GetPaging() == nil {
 		req.Paging = &pb.Paging{PageLimit: uint64(10), PageNumber: uint64(1)}
 	}
@@ -212,18 +193,31 @@ func convertRestaurantConditions(req *pb.ListRestaurantsRequest) *pb.ListRestaur
 		defaultSortedBy := "created_at"
 		req.SortedBy = &defaultSortedBy
 	}
+	if req.GetRestaurantName() == "" {
+		req.RestaurantName = nil
+	}
+	if req.GetNation() == "" {
+		req.Nation = nil
+	}
+	if req.GetPrefecture() == "" {
+		req.Prefecture = nil
+	}
+	if req.GetItemName() == "" {
+		req.ItemName = nil
+	}
 	return req
 }
 
-func (s *oTabeServer) ListRestaurantsByOptions(ctx context.Context, req *pb.ListRestaurantsRequest, ) (*pb.ListRestaurantsResponse, error) {
+func (s *OTabeServer) ListRestaurantsByOptions(ctx context.Context, req *pb.ListRestaurantsRequest, ) (*pb.ListRestaurantsResponse, error) {
 	errV := controller.ValidateListRestaurantsRequest(req)
 	if errV != nil {
 		return nil, errV
 	}
 	// convert condition : order by values
-	convertedReqConditions := convertRestaurantConditions(req)
+	convertedReqConditions := ConvertRestaurantConditions(req)
+	log.Printf("==== %v", convertedReqConditions)
 
-	restaurantIds, err := searchRestaurants(convertedReqConditions)
+	restaurantIds, err := SearchRestaurants(convertedReqConditions)
 	if err != nil {
 		log.Fatalf("Err query searh restaurants by options %v", err)
 		panic(err)
@@ -245,9 +239,122 @@ func (s *oTabeServer) ListRestaurantsByOptions(ctx context.Context, req *pb.List
 	return &pb.ListRestaurantsResponse{Data: restaurantsList}, nil
 }
 
+// GetRestaurantDetails : api get restaurant details
+func (s *OTabeServer) GetRestaurantDetails(ctx context.Context, req *pb.GetRestaurantRequest) (*pb.GetRestaurantResponse, error) {
+	var restaurantId = req.GetRestaurantId()
+	resQuery, er := db.Query("SELECT * FROM restaurant WHERE id = ?", restaurantId)
+	if er != nil {
+		log.Fatalf("Cannot get restaurant details %v", err)
+		panic(er)
+	}
+	res := &pb.Restaurant{Geo: &pb.Geo{}}
+	for resQuery.Next() {
+		err = resQuery.Scan(&res.Id, &res.Name, &res.Website, &res.Phone, &res.Description,
+			&res.Address, &res.PostalCode, &res.Geo.Long, &res.Geo.Lat, &res.CreatedAt, &res.UpdatedAt)
+		if err != nil {
+			log.Fatalf("Cannot get restaurant details %v", err)
+			panic(err)
+		}
+	}
 
+	menus, nationsRate := GetMenus(restaurantId)
+	return &pb.GetRestaurantResponse{Restaurant: res, NationsRate: nationsRate, Menus: menus}, nil
+}
+
+func (s *OTabeServer) CreateNewRestaurant(ctx context.Context, req *pb.CreateRestaurantRequest) (*pb.CreateRestaurantResponse, error) {
+	log.Printf("**** %v", req)
+	// check geo
+	existedRestaurant, err := db.Query("SELECT id FROM restaurant WHERE `long` = ? AND lat = ?",
+		req.Restaurant.Geo.Long, req.Restaurant.Geo.Lat)
+
+	if err != nil {
+		log.Fatalf("Err query get restaurant id with geo %v", err)
+		panic(err)
+	}
+	for existedRestaurant.Next() {
+		log.Fatalf("restaurant existed %v", err)
+		panic(err)
+	}
+
+	newRestaurantQuery, err := db.Query("INSERT INTO restaurant (name, website, phone, description, postal_code, address, `long`, lat, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		req.Restaurant.Name, req.Restaurant.Website, req.Restaurant.Phone, req.Restaurant.Description,
+		req.Restaurant.PostalCode, req.Restaurant.Address, req.Restaurant.Geo.Long, req.Restaurant.Geo.Lat,
+		time.Now().Format(time.RFC3339), time.Now().Format(time.RFC3339))
+	if err != nil {
+		log.Fatalf("Err query create new restaurant %v", err)
+		panic(err)
+	}
+
+	newRestaurant := &pb.Restaurant{}
+	for newRestaurantQuery.Next() {
+		err = newRestaurantQuery.Scan(&newRestaurant.Id)
+		if err != nil {
+			log.Fatalf("Cannot scan restaurant details %v", err)
+			panic(err)
+		}
+	}
+
+	restaurantQuery, err := db.Query("SELECT LAST_INSERT_ID()")
+	for restaurantQuery.Next() {
+		err = restaurantQuery.Scan(&newRestaurant.Id)
+		if err != nil {
+			log.Fatalf("Cannot scan restaurant details %v", err)
+			panic(err)
+		}
+	}
+	for _, menu := range req.Menus {
+		_, err := db.Query("INSERT INTO menu (restaurant_id, name, created_at, updated_at) VALUES (?, ?, ?, ?)",
+			newRestaurant.Id, menu.Name, time.Now().Format(time.RFC3339), time.Now().Format(time.RFC3339))
+		if err != nil {
+			log.Fatalf("Err query create new menu %v", err)
+			panic(err)
+		}
+		menuId := new(int)
+		menuQuery, err := db.Query("SELECT MAX(id) from menu")
+		for menuQuery.Next() {
+			err = menuQuery.Scan(&menuId)
+			log.Printf("=== id %v", *menuId)
+			if err != nil {
+				log.Fatalf("Cannot scan menu id %v", err)
+				panic(err)
+			}
+		}
+		for _, item := range menu.MenuItems {
+			_, err := db.Query("INSERT INTO item (menu_id, name, description, price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+				*menuId, item.ItemName, item.Description, item.Price, time.Now().Format(time.RFC3339), time.Now().Format(time.RFC3339))
+			if err != nil {
+				log.Fatalf("Err query create new item %v", err)
+				panic(err)
+			}
+		}
+	}
+
+	resQuery, er := db.Query("SELECT * FROM restaurant WHERE id = ?", newRestaurant.Id)
+	if er != nil {
+		log.Fatalf("Cannot get restaurant details %v", err)
+		panic(er)
+	}
+	res := &pb.Restaurant{Geo: &pb.Geo{}}
+	createdAt := make([]uint8, 0)
+	updatedAt := make([]uint8, 0)
+	for resQuery.Next() {
+		err = resQuery.Scan(&res.Id, &res.Name, &res.Website, &res.Phone, &res.Description,
+			&res.Address, &res.PostalCode, &res.Geo.Long, &res.Geo.Lat, &createdAt, &updatedAt)
+		if err != nil {
+			log.Fatalf("Cannot get restaurant details %v", err)
+			panic(err)
+		}
+	}
+	return &pb.CreateRestaurantResponse{Restaurant: res}, nil
+}
+
+//func (s *oTabeServer) UpdateRestaurant(ctx context.Context, req *pb.UpdateRestaurantRequest) (*pb.GetRestaurantResponse, error) {
+//	//  find res -> update info res
+//	// find menus -> update each
+//	// find items -> update each
+//}
 func connect() {
-	db, err = sql.Open("mysql", "root:Hannamysql.1518@tcp(127.0.0.1:50001)/otabe")
+	db, err = sql.Open("mysql", "root:Hannamysql.1518@tcp(127.0.0.1:49547)/otabe")
 	if err != nil {
 		log.Fatalf("Error validating sql.Open arguments")
 		panic(err)
@@ -265,7 +372,7 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
-	pb.RegisterOTabeManagerServer(grpcServer, &oTabeServer{})
+	pb.RegisterOTabeManagerServer(grpcServer, &OTabeServer{})
 	log.Printf("Server listening at port %v", lis.Addr())
 
 	// connect to database
@@ -275,5 +382,4 @@ func main() {
 		log.Fatalf("Failed to serve %v", err)
 	}
 	defer db.Close()
-
 }

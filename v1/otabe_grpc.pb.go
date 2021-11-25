@@ -18,8 +18,12 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OTabeManagerClient interface {
+	// user
 	GetRestaurantDetails(ctx context.Context, in *GetRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error)
 	ListRestaurantsByOptions(ctx context.Context, in *ListRestaurantsRequest, opts ...grpc.CallOption) (*ListRestaurantsResponse, error)
+	//admin
+	CreateNewRestaurant(ctx context.Context, in *CreateRestaurantRequest, opts ...grpc.CallOption) (*CreateRestaurantResponse, error)
+	UpdateRestaurant(ctx context.Context, in *UpdateRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error)
 }
 
 type oTabeManagerClient struct {
@@ -48,12 +52,34 @@ func (c *oTabeManagerClient) ListRestaurantsByOptions(ctx context.Context, in *L
 	return out, nil
 }
 
+func (c *oTabeManagerClient) CreateNewRestaurant(ctx context.Context, in *CreateRestaurantRequest, opts ...grpc.CallOption) (*CreateRestaurantResponse, error) {
+	out := new(CreateRestaurantResponse)
+	err := c.cc.Invoke(ctx, "/v1.OTabeManager/CreateNewRestaurant", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *oTabeManagerClient) UpdateRestaurant(ctx context.Context, in *UpdateRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error) {
+	out := new(GetRestaurantResponse)
+	err := c.cc.Invoke(ctx, "/v1.OTabeManager/UpdateRestaurant", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OTabeManagerServer is the server API for OTabeManager service.
 // All implementations must embed UnimplementedOTabeManagerServer
 // for forward compatibility
 type OTabeManagerServer interface {
+	// user
 	GetRestaurantDetails(context.Context, *GetRestaurantRequest) (*GetRestaurantResponse, error)
 	ListRestaurantsByOptions(context.Context, *ListRestaurantsRequest) (*ListRestaurantsResponse, error)
+	//admin
+	CreateNewRestaurant(context.Context, *CreateRestaurantRequest) (*CreateRestaurantResponse, error)
+	UpdateRestaurant(context.Context, *UpdateRestaurantRequest) (*GetRestaurantResponse, error)
 	mustEmbedUnimplementedOTabeManagerServer()
 }
 
@@ -66,6 +92,12 @@ func (UnimplementedOTabeManagerServer) GetRestaurantDetails(context.Context, *Ge
 }
 func (UnimplementedOTabeManagerServer) ListRestaurantsByOptions(context.Context, *ListRestaurantsRequest) (*ListRestaurantsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRestaurantsByOptions not implemented")
+}
+func (UnimplementedOTabeManagerServer) CreateNewRestaurant(context.Context, *CreateRestaurantRequest) (*CreateRestaurantResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateNewRestaurant not implemented")
+}
+func (UnimplementedOTabeManagerServer) UpdateRestaurant(context.Context, *UpdateRestaurantRequest) (*GetRestaurantResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateRestaurant not implemented")
 }
 func (UnimplementedOTabeManagerServer) mustEmbedUnimplementedOTabeManagerServer() {}
 
@@ -116,6 +148,42 @@ func _OTabeManager_ListRestaurantsByOptions_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OTabeManager_CreateNewRestaurant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRestaurantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OTabeManagerServer).CreateNewRestaurant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.OTabeManager/CreateNewRestaurant",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OTabeManagerServer).CreateNewRestaurant(ctx, req.(*CreateRestaurantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OTabeManager_UpdateRestaurant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRestaurantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OTabeManagerServer).UpdateRestaurant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.OTabeManager/UpdateRestaurant",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OTabeManagerServer).UpdateRestaurant(ctx, req.(*UpdateRestaurantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OTabeManager_ServiceDesc is the grpc.ServiceDesc for OTabeManager service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -130,6 +198,14 @@ var OTabeManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListRestaurantsByOptions",
 			Handler:    _OTabeManager_ListRestaurantsByOptions_Handler,
+		},
+		{
+			MethodName: "CreateNewRestaurant",
+			Handler:    _OTabeManager_CreateNewRestaurant_Handler,
+		},
+		{
+			MethodName: "UpdateRestaurant",
+			Handler:    _OTabeManager_UpdateRestaurant_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

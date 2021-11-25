@@ -1,6 +1,5 @@
 package main
 
-
 import (
 	"context"
 	"encoding/json"
@@ -37,6 +36,19 @@ func listRestaurantsByOptions(client pb.OTabeManagerClient, ctx context.Context,
 	fmt.Printf(`%s`,resJson)
 }
 
+func createNewRestaurant(client pb.OTabeManagerClient, ctx context.Context, req *pb.CreateRestaurantRequest) {
+	res, err := client.CreateNewRestaurant(ctx, req)
+	if err != nil {
+		log.Fatalf("%v.CreateNewRestaurant(_) = _, %v: ", client, err)
+	}
+	resJson, _ := json.Marshal(res)
+	fmt.Printf(`%s`,resJson)
+}
+
+//func updateRestaurant(client pb.OTabeManagerClient, ctx context.Context, req *pb.UpdateRestaurantRequest) {
+//
+//}
+
 func main() {
 	conn, err := grpc.Dial(*serverAddr, grpc.WithInsecure(), grpc.WithBlock())
 	// WithBlock: ensure Dial() will not return value until the connection is made
@@ -49,25 +61,48 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	//getRestaurantDetails(client, ctx, &pb.GetRestaurantRequest{RestaurantId: 1})
-	//restaurantName := "HaNoi & Hanoi"
-	//nation := "Vietnamese"
-	//itemName := "Banh mi nhan thit"
-	//prefecture := "1-3-28 Shaiba Tokyo"
-	//lat := 35.64489421538165
-	//long := 139.74929356703967
-	//distance := float64(100000)
-	//location:= &pb.SearchLocationConditions{Long: &long, Lat: &lat, Distance: &distance}
-	//paging := &pb.Paging{PageLimit: 10, PageNumber: 2}
-	//sortedBy := "created_at"
-
+	//restaurantName := flag.String("restaurantName","" , "name for restaurant")
+	//nation := flag.String("restaurantNation", "", "user's nation voted items for restaurant")
+	//itemName := flag.String("itemName", "", "name of item in restaurant")
+	//prefecture := flag.String("prefecture", "Tokyo", "name of item in restaurant")
+	//long := flag.Float64("long", 14.34542, "longitude of search area")
+	//lat := flag.Float64("lat", 243.2352345, "latitude of search area")
+	//distance := flag.Float64("distance", 0, "radius of search area")
+	//pageLimit := flag.Uint64("pageLimit", 10, "limit of results in 1 page")
+	//pageNumber := flag.Uint64("pageNumber", 1, "page number")
+	//location := &pb.SearchLocationConditions{Long: long, Lat: lat, Distance: distance}
+	//paging := &pb.Paging{PageLimit: *pageLimit, PageNumber: *pageNumber}
+	//sortedBy := flag.String("sortedBy", "created_at", "sorted results by column")
+	//
+	//if *long == 0 || *lat == 0 || *distance == 0 {
+	//	location = nil
+	//}
+	//flag.Parse()
 	listRestaurantsByOptions(client, ctx, &pb.ListRestaurantsRequest{
-		//RestaurantName: &restaurantName,
-		//Nation: &nation,
-		//ItemName: &itemName,
-		//Prefecture: &prefecture,
+		//RestaurantName: restaurantName,
+		//Nation: nation,
+		//ItemName: itemName,
+		//Prefecture: prefecture,
 		//Location: location,
 		//Paging: paging,
-		//SortedBy: &sortedBy,
+		//SortedBy: sortedBy,
 	})
+
+	//getRestaurantDetails(client, ctx, &pb.GetRestaurantRequest{})
+
+	//restaurant := &pb.RestaurantRequest{
+	//	Name: *restaurantName,
+	//	Website: "ngongon.com",
+	//	Phone: "0235878",
+	//	Description: "ngon",
+	//	PostalCode: "1080023",
+	//	Address: *prefecture,
+	//	Geo: &pb.Geo{Long: *long, Lat: *lat},
+	//}
+	//
+	//menuItems := make([]*pb.MenuItemsRequest, 0)
+	//menuItems = append(menuItems, &pb.MenuItemsRequest{ItemName: "Banh my trung", Description: "ngon gion", Price: 1253})
+	//menus := make([]*pb.MenuRequest, 0)
+	//menus = append(menus, &pb.MenuRequest{Name: "First", MenuItems: menuItems})
+	//createNewRestaurant(client, ctx, &pb.CreateRestaurantRequest{Restaurant: restaurant, Menus: menus})
 }
