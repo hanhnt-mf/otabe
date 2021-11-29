@@ -23,7 +23,9 @@ type OTabeManagerClient interface {
 	ListRestaurantsByOptions(ctx context.Context, in *ListRestaurantsRequest, opts ...grpc.CallOption) (*ListRestaurantsResponse, error)
 	//admin
 	CreateNewRestaurant(ctx context.Context, in *CreateRestaurantRequest, opts ...grpc.CallOption) (*CreateRestaurantResponse, error)
-	UpdateRestaurant(ctx context.Context, in *UpdateRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error)
+	UpdateRestaurant(ctx context.Context, in *CreateRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error)
+	//auth
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 }
 
 type oTabeManagerClient struct {
@@ -61,9 +63,18 @@ func (c *oTabeManagerClient) CreateNewRestaurant(ctx context.Context, in *Create
 	return out, nil
 }
 
-func (c *oTabeManagerClient) UpdateRestaurant(ctx context.Context, in *UpdateRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error) {
+func (c *oTabeManagerClient) UpdateRestaurant(ctx context.Context, in *CreateRestaurantRequest, opts ...grpc.CallOption) (*GetRestaurantResponse, error) {
 	out := new(GetRestaurantResponse)
 	err := c.cc.Invoke(ctx, "/v1.OTabeManager/UpdateRestaurant", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *oTabeManagerClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+	out := new(LoginResponse)
+	err := c.cc.Invoke(ctx, "/v1.OTabeManager/Login", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +90,9 @@ type OTabeManagerServer interface {
 	ListRestaurantsByOptions(context.Context, *ListRestaurantsRequest) (*ListRestaurantsResponse, error)
 	//admin
 	CreateNewRestaurant(context.Context, *CreateRestaurantRequest) (*CreateRestaurantResponse, error)
-	UpdateRestaurant(context.Context, *UpdateRestaurantRequest) (*GetRestaurantResponse, error)
+	UpdateRestaurant(context.Context, *CreateRestaurantRequest) (*GetRestaurantResponse, error)
+	//auth
+	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	mustEmbedUnimplementedOTabeManagerServer()
 }
 
@@ -96,8 +109,11 @@ func (UnimplementedOTabeManagerServer) ListRestaurantsByOptions(context.Context,
 func (UnimplementedOTabeManagerServer) CreateNewRestaurant(context.Context, *CreateRestaurantRequest) (*CreateRestaurantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateNewRestaurant not implemented")
 }
-func (UnimplementedOTabeManagerServer) UpdateRestaurant(context.Context, *UpdateRestaurantRequest) (*GetRestaurantResponse, error) {
+func (UnimplementedOTabeManagerServer) UpdateRestaurant(context.Context, *CreateRestaurantRequest) (*GetRestaurantResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateRestaurant not implemented")
+}
+func (UnimplementedOTabeManagerServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
 func (UnimplementedOTabeManagerServer) mustEmbedUnimplementedOTabeManagerServer() {}
 
@@ -167,7 +183,7 @@ func _OTabeManager_CreateNewRestaurant_Handler(srv interface{}, ctx context.Cont
 }
 
 func _OTabeManager_UpdateRestaurant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateRestaurantRequest)
+	in := new(CreateRestaurantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -179,7 +195,25 @@ func _OTabeManager_UpdateRestaurant_Handler(srv interface{}, ctx context.Context
 		FullMethod: "/v1.OTabeManager/UpdateRestaurant",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OTabeManagerServer).UpdateRestaurant(ctx, req.(*UpdateRestaurantRequest))
+		return srv.(OTabeManagerServer).UpdateRestaurant(ctx, req.(*CreateRestaurantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OTabeManager_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OTabeManagerServer).Login(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/v1.OTabeManager/Login",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OTabeManagerServer).Login(ctx, req.(*LoginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -206,6 +240,10 @@ var OTabeManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateRestaurant",
 			Handler:    _OTabeManager_UpdateRestaurant_Handler,
+		},
+		{
+			MethodName: "Login",
+			Handler:    _OTabeManager_Login_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

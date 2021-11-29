@@ -13,7 +13,10 @@ service OTabeManager {
 
   //admin
   rpc CreateNewRestaurant (CreateRestaurantRequest) returns (CreateRestaurantResponse) {}
-  rpc UpdateRestaurant (UpdateRestaurantRequest) returns (GetRestaurantResponse) {}
+  rpc UpdateRestaurant (CreateRestaurantRequest) returns (GetRestaurantResponse) {}
+
+  //auth
+  rpc Login(LoginRequest) returns (LoginResponse) {}
 }
 
 message GetRestaurantRequest {
@@ -72,9 +75,8 @@ message Menus {
 
 message Users {
   int32 id = 1;
-  string first_name = 2;
-  string last_name = 3;
-  string nation = 4;
+  string user_name = 2;
+  string nation = 3;
 }
 
 message GetRestaurantResponse {
@@ -119,6 +121,7 @@ message ListRestaurantsResponse {
 }
 
 message RestaurantRequest {
+  optional int32 id = 1;
   string name = 2;
   string website = 3;
   string phone = 4;
@@ -129,14 +132,16 @@ message RestaurantRequest {
 }
 
 message MenuItemsRequest {
-  string item_name = 1;
-  string description = 2;
-  int32 price = 3;
+  optional int32 id = 1;
+  string item_name = 2;
+  string description = 3;
+  int32 price = 4;
 }
 
 message MenuRequest {
-  string name = 1;
-  repeated MenuItemsRequest menu_items = 2;
+  optional int32 id = 1;
+  string name = 2;
+  repeated MenuItemsRequest menu_items = 3;
 }
 
 message CreateRestaurantRequest {
@@ -148,8 +153,12 @@ message CreateRestaurantResponse {
   Restaurant restaurant = 1;
 }
 
-message UpdateRestaurantRequest {
-  Restaurant restaurant = 1;
-  repeated Menus menus = 2;
-  repeated MenuItems menu_items = 3;
+message LoginRequest {
+  string username = 1;
+  string password = 2;
 }
+
+message LoginResponse {
+  string access_token = 1;
+}
+
