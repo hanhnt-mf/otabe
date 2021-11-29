@@ -18,6 +18,10 @@ enum InvalidFieldType {
   INVALID_FIELD_TYPE_PAGING = 8;
   INVALID_FIELD_TYPE_MAX_CONTENTS_PER_PAGE = 9;
   INVALID_FIELD_TYPE_PAGE_NUMBER = 10;
+
+  INVALID_FIELD_TYPE_RESTAURANT_ID = 11;
+  INVALID_FIELD_TYPE_RESTAURANT_PARAMS = 12;
+
 }
 
 // エラー種別を表現
@@ -67,6 +71,8 @@ enum InvalidReasonType {
   // 特定のTimeStampより前のTimeStampが指定されているエラー
   //  "must be after or equal to {{min_timestamp}}"
   INVALID_REASON_TYPE_TIMESTAMP_MUST_BE_AFTER_OR_EQUAL_TO = 11;
+
+  INVALID_REASON_TYPE_RESTAURANT_NOT_FOUND = 12;
 }
 
 message ValidationErrorDetails {

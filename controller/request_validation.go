@@ -112,6 +112,29 @@ func ValidatePaging(paging *pb.Paging) []*pb.ValidationErrorDetails {
 	return validationErrorDetailsList
 }
 
+func RestaurantNotFound() error {
+	var validationErrorDetailsList []*pb.ValidationErrorDetails
+
+	validationErrorDetails := &pb.ValidationErrorDetails{
+		Fields: []*pb.ValidationTargetField{
+			{
+				Field: pb.InvalidFieldType_INVALID_FIELD_TYPE_RESTAURANT_ID,
+				FieldLocation: []*pb.InvalidFieldLocation{
+					{Field: pb.InvalidFieldType_INVALID_FIELD_TYPE_RESTAURANT_PARAMS},
+				},
+			},
+		},
+		Reason: pb.InvalidReasonType_INVALID_REASON_TYPE_RESTAURANT_NOT_FOUND,
+		ReasonOptions: map[string]string{
+			"restaurant_id": "1",
+		},
+		Description: "restaurant with id is not found",
+	}
+	validationErrorDetailsList = append(validationErrorDetailsList, validationErrorDetails)
+
+	return NewInvalidArgumentErrorWithDetails(validationErrorDetailsList)
+}
+
 func ValidateListRestaurantsRequest(req *pb.ListRestaurantsRequest) error {
 	var validationErrorDetailsList []*pb.ValidationErrorDetails
 
@@ -127,6 +150,8 @@ func ValidateListRestaurantsRequest(req *pb.ListRestaurantsRequest) error {
 	}
 	return NewInvalidArgumentErrorWithDetails(validationErrorDetailsList)
 }
+
+
 
 func NewInvalidArgumentErrorWithDetails(validationErrorDetailsList []*pb.ValidationErrorDetails) error {
 	if validationErrorDetailsList == nil {
