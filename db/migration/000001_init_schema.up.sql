@@ -15,9 +15,10 @@ CREATE TABLE `restaurant` (
 
 CREATE TABLE `user` (
     `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-    `first_name` varchar(100) NOT NULL,
-    `last_name` varchar(100) NOT NULL,
+    `user_name` varchar(100) NOT NULL,
     `nation` varchar(25) NOT NULL,
+    `password` varchar(100) NOT NULL,
+    `role` varchar(100) DEFAULT "user",
     `created_at` date DEFAULT NULL,
     `updated_at` date DEFAULT NULL,
     PRIMARY KEY (`id`)
@@ -74,9 +75,9 @@ insert into `item`(`menu_id`,`name`,`description`, `price`)
 values
     (1, "Banh mi rau", "Vetgetable", "3400");
 
-insert into `user`(`first_name`, `last_name`, `nation`)
+insert into `user`(`user_name`, `nation`, `password`, `role`)
 values
-    ("Ha", "Na", "Vietnamese");
+    ("HaNa", "Vietnamese", "$2a$10$d/xK0aG7NEo5BGPgjmbmUObD1.EucgeSRHKKzi9.UoqePZOwJxEQS", "admin");
 
 insert into `item_feedback`(`user_id`,`item_id`,`comment`,`rate`)
 values

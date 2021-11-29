@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+  server:
+    image: pbl-otabe
+    ports:
+      - "8080:8080"
+    container_name: server
+    command: /bin/sh -c "go run server/otabe_server.go"
+    depends_on:
+      - mysql
+    volumes:
+      - .:/pbl-otabe
+
+  client:
+    image: pbl-otabe
+    container_name: client
+    depends_on:
+      - server
+    volumes:
+      - .:/pbl-otabe
+
+  mysql:
+    image: mysql
+    ports:
+      - "49425:49500"
+    environment:
+      MYSQL_DATABASE: 'otabe'
+      MYSQL_PASSWORD: 'Hannamysql.1518'
+      MYSQL_ROOT_PASSWORD: 'Hannamysql.1518'
+    volumes:
+      - ./db/migration/000001_init_schema.up.sql:/pbl-otabe/db/migration/000001_init_schema.up.sql

@@ -96,8 +96,28 @@ func (mr *MockOTabeManagerClientMockRecorder) ListRestaurantsByOptions(arg0, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRestaurantsByOptions", reflect.TypeOf((*MockOTabeManagerClient)(nil).ListRestaurantsByOptions), varargs...)
 }
 
+// Login mocks base method.
+func (m *MockOTabeManagerClient) Login(arg0 context.Context, arg1 *v1.LoginRequest, arg2 ...grpc.CallOption) (*v1.LoginResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Login", varargs...)
+	ret0, _ := ret[0].(*v1.LoginResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Login indicates an expected call of Login.
+func (mr *MockOTabeManagerClientMockRecorder) Login(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockOTabeManagerClient)(nil).Login), varargs...)
+}
+
 // UpdateRestaurant mocks base method.
-func (m *MockOTabeManagerClient) UpdateRestaurant(arg0 context.Context, arg1 *v1.UpdateRestaurantRequest, arg2 ...grpc.CallOption) (*v1.GetRestaurantResponse, error) {
+func (m *MockOTabeManagerClient) UpdateRestaurant(arg0 context.Context, arg1 *v1.CreateRestaurantRequest, arg2 ...grpc.CallOption) (*v1.GetRestaurantResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
