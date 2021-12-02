@@ -1,32 +1,38 @@
 version: "3"
 
 services:
+  db:
+    image: mysql
+    container_name: mysql1
+    ports:
+      - "49425:3306"
+    environment:
+      MYSQL_USER: "docker"
+      MYSQL_DATABASE: 'otabe'
+      MYSQL_PASSWORD: 'Hannamysql.1518'
+      MYSQL_ROOT_PASSWORD: 'Hannamysql.1518'
+
   server:
     image: pbl-otabe
     ports:
       - "8080:8080"
     container_name: server
-    command: /bin/sh -c "go run server/otabe_server.go"
+    command: /bin/sh -c "go run cmd/server/otabe_server.go | jq ."
     depends_on:
-      - mysql
+      - db
     volumes:
       - .:/pbl-otabe
+    build:
+      context: .
 
   client:
     image: pbl-otabe
+    ports:
+      - "8000:8000"
     container_name: client
+    command: /bin/sh -c "go run cmd/client/otabe_client.go"
     depends_on:
       - server
     volumes:
       - .:/pbl-otabe
 
-  mysql:
-    image: mysql
-    ports:
-      - "49425:49500"
-    environment:
-      MYSQL_DATABASE: 'otabe'
-      MYSQL_PASSWORD: 'Hannamysql.1518'
-      MYSQL_ROOT_PASSWORD: 'Hannamysql.1518'
-    volumes:
-      - ./db/migration/000001_init_schema.up.sql:/pbl-otabe/db/migration/000001_init_schema.up.sql
