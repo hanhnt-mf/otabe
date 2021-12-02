@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	pb "otabe/v1"
+	pb "otabe/pb"
 	"strconv"
 )
 

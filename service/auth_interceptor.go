@@ -35,7 +35,6 @@ func (interceptor *AuthInterceptor) Unary() grpc.UnaryServerInterceptor  {
 }
 
 func (interceptor *AuthInterceptor) authorize(ctx context.Context, method string) error {
-	log.Printf("------ %v - %v", interceptor.accessibleRoles[method], method)
 	accessibleRoles, ok := interceptor.accessibleRoles[method]
 	if !ok {
 		// everyone can access

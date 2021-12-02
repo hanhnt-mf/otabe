@@ -1,33 +1,33 @@
 package mock_v1
 
-import v1 "otabe/v1"
+import pb "otabe/pb"
 
-var NationsRate = &v1.NationsRate{
+var NationsRate = &pb.NationsRate{
 	NationName: "Vietnamese",
 	Rate: 4,
 }
-var Feedbacks = []*v1.Feedbacks{
-	&v1.Feedbacks{
+var Feedbacks = []*pb.Feedbacks{
+	&pb.Feedbacks{
 		Nation: "Vietnamese",
 		Rate: 4,
-		Comments: []*v1.Comments{
-			&v1.Comments{
+		Comments: []*pb.Comments{
+			&pb.Comments{
 				UserId: 1,
 				UserComment: "Oishii ne",
 				Rate: 5,
 			},
-			&v1.Comments{
+			&pb.Comments{
 				UserId: 2,
 				UserComment: "Oaaaa",
 				Rate: 3,
 			},
 		},
 	},
-	&v1.Feedbacks{
+	&pb.Feedbacks{
 		Nation: "Japanese",
 		Rate: 5,
-		Comments: []*v1.Comments{
-			&v1.Comments{
+		Comments: []*pb.Comments{
+			&pb.Comments{
 				UserId: 3,
 				UserComment: "Ngon ghe",
 				Rate: 5,
@@ -35,21 +35,21 @@ var Feedbacks = []*v1.Feedbacks{
 		},
 	},
 }
-var Menu_items = []*v1.MenuItems{
-	&v1.MenuItems{
+var Menu_items = []*pb.MenuItems{
+	&pb.MenuItems{
 		ItemName: "Banh mi nhan thit",
 		Description: "With pork inside",
 		Price: 5300,
 		Feedbacks: Feedbacks,
 	},
-	&v1.MenuItems{
+	&pb.MenuItems{
 		ItemName: "Banh mi rau",
 		Description: "Vegetable",
 		Price: 3400,
 	},
 }
-var RestaurantDetails = &v1.GetRestaurantResponse{
-	Restaurant: &v1.Restaurant{
+var RestaurantDetails = &pb.GetRestaurantResponse{
+	Restaurant: &pb.Restaurant{
 		Id: 1,
 		Name: "HaNoi & Hanoi",
 		Website: "hanoi.com",
@@ -57,21 +57,21 @@ var RestaurantDetails = &v1.GetRestaurantResponse{
 		Description: "oishii",
 		PostalCode: "1080023",
 		Address: "Tokyo",
-		Geo: &v1.Geo{
+		Geo: &pb.Geo{
 			Lat: 35.644597778,
 			Long: 139.748714210,
 		},
 	},
-	NationsRate: []*v1.NationsRate{NationsRate, &v1.NationsRate{NationName: "Japanese", Rate: 5}},
-	Menus: []*v1.Menus{
-		&v1.Menus{
+	NationsRate: []*pb.NationsRate{NationsRate, &pb.NationsRate{NationName: "Japanese", Rate: 5}},
+	Menus: []*pb.Menus{
+		&pb.Menus{
 			Name: "Main",
 			MenuItems: Menu_items,
 		},
-		&v1.Menus{
+		&pb.Menus{
 			Name: "Haru",
-			MenuItems: []*v1.MenuItems{
-				&v1.MenuItems{
+			MenuItems: []*pb.MenuItems{
+				&pb.MenuItems{
 					ItemName: "Banh mi cuon",
 					Description: "Okonomi yaki",
 					Price: 6000,
@@ -81,8 +81,8 @@ var RestaurantDetails = &v1.GetRestaurantResponse{
 	},
 }
 
-var ListRestaurants = &v1.ListRestaurantsResponse{
-	Data: []*v1.GetRestaurantResponse{
+var ListRestaurants = &pb.ListRestaurantsResponse{
+	Data: []*pb.GetRestaurantResponse{
 		RestaurantDetails,
 	},
 }

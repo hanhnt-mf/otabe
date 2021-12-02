@@ -1,5 +1,5 @@
-gen-otabe:
-	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative v1/otabe.proto
+gen:
+	protoc --proto_path=proto proto/*.proto  --go_out=:pb --go-grpc_out=:pb
 
 migrateup:
 	 migrate -path db/migration -database "mysql://root:Hannamysql.1518@tcp(localhost:49530)/otabe" -verbose up

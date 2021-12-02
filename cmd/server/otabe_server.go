@@ -13,8 +13,8 @@ import (
 	"net"
 	pbl_otabe "otabe"
 	"otabe/controller"
+	pb "otabe/pb"
 	service "otabe/service"
-	pb "otabe/v1"
 	"time"
 )
 
@@ -221,7 +221,6 @@ func (s *OTabeServer) ListRestaurantsByOptions(ctx context.Context, req *pb.List
 	}
 	// convert condition : order by values
 	convertedReqConditions := ConvertRestaurantConditions(req)
-	log.Printf("==== %v", convertedReqConditions)
 
 	restaurantIds, err := SearchRestaurants(convertedReqConditions)
 	if err != nil {
@@ -286,7 +285,7 @@ func insertNewRestaurant(restaurant *pb.RestaurantRequest) (int32, error) {
 	_, err := insertResPrepare.Query(
 		restaurant.Name, restaurant.Website,restaurant.Phone, restaurant.Description,
 		restaurant.PostalCode, restaurant.Address, restaurant.Geo.Long, restaurant.Geo.Lat,
-		time.Now().Format(time.RFC3339), time.Now().Format(time.RFC3339))
+		time.Now().Format("2006-01-02 15:04:05"), time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		log.Fatalf("Err query create new restaurant %v", err)
 		panic(err)
@@ -329,7 +328,7 @@ func insertMenuItems(menus []*pb.MenuRequest, restaurantId int32) error {
 			panic(errR)
 		}
 		_, err := insertMenuSQLPrepare.Query(restaurantId, menu.Name,
-			time.Now().Format(time.RFC3339), time.Now().Format(time.RFC3339))
+			time.Now().Format("2006-01-02 15:04:05"), time.Now().Format("2006-01-02 15:04:05"))
 		if err != nil {
 			log.Fatalf("Err query create new menu %v", err)
 			panic(err)
@@ -352,7 +351,7 @@ func insertMenuItems(menus []*pb.MenuRequest, restaurantId int32) error {
 
 		for _, item := range menu.MenuItems {
 			_, err := db.Query("INSERT INTO item (menu_id, name, description, price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-				*menuId, item.ItemName, item.Description, item.Price, time.Now().Format(time.RFC3339), time.Now().Format(time.RFC3339))
+				*menuId, item.ItemName, item.Description, item.Price, time.Now().Format("2006-01-02 15:04:05"), time.Now().Format("2006-01-02 15:04:05"))
 			if err != nil {
 				log.Fatalf("Err query create new item %v", err)
 				panic(err)
@@ -363,31 +362,26 @@ func insertMenuItems(menus []*pb.MenuRequest, restaurantId int32) error {
 	return nil
 }
 func (s *OTabeServer) CreateNewRestaurant(ctx context.Context, req *pb.CreateRestaurantRequest) (*pb.CreateRestaurantResponse, error) {
-	log.Printf("**** %v", req)
 	// check geo
 	existedRestaurant, err := db.Query("SELECT id FROM restaurant WHERE `long` = ? AND lat = ?",
 		req.Restaurant.Geo.Long, req.Restaurant.Geo.Lat)
 
 	if err != nil {
-		log.Fatalf("Err query get restaurant id with geo %v", err)
-		panic(err)
+		return nil, status.Errorf(codes.Internal, "cannot find restaurant: %v", err)
+
 	}
 	for existedRestaurant.Next() {
-		log.Fatalf("restaurant existed %v", err)
-		panic(err)
+		return nil, status.Errorf(codes.InvalidArgument, "restaurant existed: %v", err)
 	}
 
 	restaurantId, err := insertNewRestaurant(req.Restaurant)
 	if err != nil {
-		log.Fatalf("Error inserting create new restaurant %v", err)
-		panic(err)
+		return nil, status.Errorf(codes.Internal, "Error inserting create new restaurant : %v", err)
 	}
 
-	log.Printf("res Id %v",restaurantId)
 	err = insertMenuItems(req.Menus, restaurantId)
 	if err != nil {
-		log.Fatalf("Error inserting menus items for creating new restaurant %v", err)
-		panic(err)
+		return nil, status.Errorf(codes.Internal, "Error inserting create new menu : %v", err)
 	}
 
 	resQuery, er := db.Query("SELECT * FROM restaurant WHERE id = ?", restaurantId)
@@ -474,7 +468,7 @@ func (s *OTabeServer) Login(ctx context.Context, req *pb.LoginRequest) (*pb.Logi
 
 
 func connect() {
-	db, err = sql.Open("mysql", "root:Hannamysql.1518@tcp(127.0.0.1:49425)/otabe")
+	db, err = sql.Open("mysql", "docker:Hannamysql.1518@tcp(db:3306)/otabe")
 	if err != nil {
 		log.Fatalf("Error validating sql.Open arguments")
 		panic(err)

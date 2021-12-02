@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/golang/mock/gomock"
 	mock_v1 "otabe/test/mock_proto"
-	v1 "otabe/v1"
+	v1 "otabe/pb"
 	"testing"
 	"time"
 )

@@ -1,53 +1,24 @@
-package service
+package client
 
 import (
 	"context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"log"
-	v1 "otabe/v1"
 	"time"
 )
 
-type OTabeClient struct {
-	service v1.OTabeManagerClient
-	username string
-	password string
-}
-
-func NewAuthClient(cc *grpc.ClientConn, username string, password string) *OTabeClient {
-	service :=v1.NewOTabeManagerClient(cc)
-	return &OTabeClient{service, username, password}
-}
-
-func (client *OTabeClient) Login() (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	req := &v1.LoginRequest{
-		Username: client.username,
-		Password: client.password,
-	}
-
-	res, err := client.service.Login(ctx, req)
-	if err != nil {
-		return "", err
-	}
-
-	return res.GetAccessToken(), nil
-}
-
-
 type AuthInterceptorClient struct {
-	authClient *OTabeClient
+	authClient *AuthClient
 	authMethods map[string]bool
 	accessToken string
 }
 
 func NewAuthInterceptorClient (
-	authClient *OTabeClient,
+	authClient *AuthClient,
 	authMethods map[string]bool,
 	refreshDuration time.Duration,
-	) (*AuthInterceptorClient, error) {
+) (*AuthInterceptorClient, error) {
 	interceptor := &AuthInterceptorClient{
 		authClient: authClient,
 		authMethods: authMethods,
@@ -70,7 +41,7 @@ func (interceptor *AuthInterceptorClient) Unary() grpc.UnaryClientInterceptor {
 		cc *grpc.ClientConn,
 		invoker grpc.UnaryInvoker,
 		opts ...grpc.CallOption,
-		) error {
+	) error {
 		log.Printf("--> unary interceptor: %s", method)
 		if interceptor.authMethods[method] {
 			return invoker(interceptor.attachToken(ctx), method, req, reply, cc, opts...)
